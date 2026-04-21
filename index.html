@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《冒险手册》运营数据分析报告</title>
+<style>
+/* ── PASSWORD GATE ── */
+#gate {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #0e1117;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+.gate-box {
+  background: #1e2233;
+  border: 1px solid rgba(200,144,58,.3);
+  border-radius: 12px;
+  padding: 40px 44px;
+  width: 360px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.gate-icon { font-size: 36px; margin-bottom: 16px; }
+.gate-title {
+  color: #f5f3ee; font-size: 18px; font-weight: 600;
+  margin-bottom: 6px; letter-spacing: .02em;
+}
+.gate-sub { color: rgba(245,243,238,.4); font-size: 13px; margin-bottom: 28px; }
+.gate-input {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px; color: #f5f3ee;
+  font-size: 15px; letter-spacing: .08em;
+  outline: none; text-align: center;
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.gate-input:focus { border-color: rgba(200,144,58,.6); }
+.gate-input::placeholder { color: rgba(245,243,238,.25); letter-spacing: .04em; }
+.gate-btn {
+  margin-top: 14px; width: 100%;
+  padding: 12px; border: none; border-radius: 8px;
+  background: #c8903a; color: #fff;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background .2s, transform .1s;
+}
+.gate-btn:hover { background: #e8a84a; }
+.gate-btn:active { transform: scale(.98); }
+.gate-err {
+  margin-top: 12px; color: #e07070;
+  font-size: 13px; min-height: 18px;
+}
+.gate-hint { margin-top: 20px; color: rgba(245,243,238,.2); font-size: 11px; }
+
+/* ── REPORT (hidden until unlocked) ── */
+#report { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ── 密码验证层 ── -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-icon">🔐</div>
+    <div class="gate-title">《冒险手册》运营报告</div>
+    <div class="gate-sub">内部数据，请输入访问密码</div>
+    <input id="pwdInput" class="gate-input" type="password"
+      placeholder="请输入密码" autocomplete="off"
+      onkeydown="if(event.key==='Enter')checkPwd()">
+    <button class="gate-btn" onclick="checkPwd()">进入报告</button>
+    <div class="gate-err" id="errMsg"></div>
+    <div class="gate-hint">CONFIDENTIAL · 禁止对外</div>
+  </div>
+</div>
+
+<!-- ── 报告主体（验证通过后显示）── -->
+<div id="report">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap');
+:root{
+  --ink:#0e1117;--ink2:#1e2233;--ink3:#52576e;--ink4:#8b90a8;
+  --bg:#f5f3ee;--bg2:#ece9e2;--bg3:#dedad0;
+  --gold:#c8903a;--gold2:#e8b86d;--gold3:rgba(200,144,58,.12);
+  --teal:#0d7a6a;--teal2:#1aaa91;--teal3:rgba(13,122,106,.1);
+  --rose:#c03a3a;--rose3:rgba(192,58,58,.09);
+  --indigo:#2a4fa0;--indigo3:rgba(42,79,160,.09);
+  --ios:#6a2a8a;--bot:#3a6a2a;
+  --warn:#c07020;
+  --r:12px;--rs:6px;
+  --serif:'Noto Serif SC',serif;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'Sora',sans-serif;
+  --sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 6px 32px rgba(0,0,0,.11);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.7;}
+
+/* ── HEADER ── */
+.hdr{background:var(--ink);color:var(--bg);padding:60px 64px 52px;position:relative;overflow:hidden;}
+.hdr-mesh{position:absolute;inset:0;background:
+  radial-gradient(ellipse 60% 80% at 90% 20%,rgba(200,144,58,.22) 0%,transparent 65%),
+  radial-gradient(ellipse 40% 60% at 10% 90%,rgba(13,122,106,.15) 0%,transparent 60%),
+  radial-gradient(ellipse 30% 40% at 60% 80%,rgba(42,79,160,.1) 0%,transparent 55%);
+  pointer-events:none;}
+.hdr-tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold2);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.hdr-tag::before{content:'';width:24px;height:1px;background:var(--gold2);}
+.hdr-title{font-family:var(--serif);font-size:38px;font-weight:700;line-height:1.18;margin-bottom:10px;max-width:580px;}
+.hdr-sub{font-size:13px;color:rgba(245,243,238,.45);margin-bottom:32px;}
+.hdr-pills{display:flex;flex-wrap:wrap;gap:8px;}
+.hp{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:4px;
+  background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.15);
+  color:rgba(245,243,238,.7);letter-spacing:.04em;}
+.hp.hi{background:rgba(200,144,58,.18);border-color:rgba(200,144,58,.35);color:var(--gold2);}
+.hp.ok{background:rgba(13,122,106,.18);border-color:rgba(13,122,106,.35);color:#4dd4be;}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:200;background:rgba(245,243,238,.97);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--bg3);
+  padding:0 64px;display:flex;overflow-x:auto;gap:0;}
+.nav::-webkit-scrollbar{display:none;}
+.ni{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink3);padding:14px 16px;cursor:pointer;border-bottom:2.5px solid transparent;
+  white-space:nowrap;transition:color .2s,border-color .2s;user-select:none;}
+.ni:hover{color:var(--ink);}
+.ni.on{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* ── MAIN ── */
+.main{padding:48px 64px 80px;max-width:1280px;}
+.sec{display:none;animation:fi .25s ease;}
+.sec.on{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SECTION HEADER ── */
+.sec-hd{margin-bottom:28px;}
+.sec-hd h2{font-family:var(--serif);font-size:24px;font-weight:700;margin-bottom:5px;}
+.sec-hd p{font-size:13px;color:var(--ink3);max-width:680px;line-height:1.75;}
+.vtag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 8px;
+  border-radius:3px;background:rgba(13,122,106,.15);color:var(--teal);margin-left:8px;
+  vertical-align:middle;letter-spacing:.05em;}
+
+/* ── KPI GRID ── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:28px;}
+.kpi{background:#fff;border:1px solid var(--bg3);border-radius:var(--r);
+  padding:16px 16px 12px;box-shadow:var(--sh);}
+.kpi.gold{border-top:3px solid var(--gold);}
+.kpi.teal{border-top:3px solid var(--teal);}
+.kpi.indigo{border-top:3px solid var(--indigo);}
+.kpi.rose{border-top:3px solid var(--rose);}
+.kpi.ios{border-top:3px solid var(--ios);}
+.kpi.bot{border-top:3px solid var(--bot);}
+.kl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);margin-bottom:5px;}
+.kv{font-family:var(--serif);font-size:26px;font-weight:700;line-height:1;margin-bottom:3px;}
+.ks{font-size:11px;color:var(--ink3);}
+
+/* ── CARD ── */
+.card{background:#fff;border:1px solid var(--bg3);border-radius:var(--r);
+  padding:24px 28px;margin-bottom:20px;box-shadow:var(--sh);}
+.card-title{font-family:var(--serif);font-size:15px;font-weight:600;margin-bottom:3px;}
+.card-sub{font-size:12px;color:var(--ink3);margin-bottom:18px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.wide{grid-template-columns:3fr 2fr;}
+.chart-body{display:grid;gap:24px;align-items:start;}
+.ch{position:relative;}
+
+/* ── CALLOUT ── */
+.co{border-left:3px solid var(--gold);background:var(--gold3);
+  border-radius:0 var(--rs) var(--rs) 0;padding:13px 16px;font-size:13px;
+  line-height:1.75;margin-bottom:18px;color:var(--ink2);}
+.co.teal{border-color:var(--teal);background:var(--teal3);}
+.co.rose{border-color:var(--rose);background:var(--rose3);}
+.co.warn{border-color:var(--warn);background:rgba(192,112,32,.07);}
+.co.ios{border-color:var(--ios);background:rgba(106,42,138,.07);}
+.co.bot{border-color:var(--bot);background:rgba(58,106,42,.07);}
+
+/* ── DATA TABLE ── */
+.dt-wrap{overflow-x:auto;}
+.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
+.dt thead tr{background:var(--ink2);}
+.dt th{color:rgba(245,243,238,.85);font-family:var(--mono);font-size:10px;
+  letter-spacing:.07em;text-transform:uppercase;padding:9px 12px;
+  text-align:right;font-weight:500;white-space:nowrap;}
+.dt th:first-child{text-align:left;}
+.dt td{padding:8px 12px;border-bottom:.5px solid var(--bg2);text-align:right;
+  font-variant-numeric:tabular-nums;white-space:nowrap;}
+.dt td:first-child{text-align:left;font-weight:500;}
+.dt tr:nth-child(even) td{background:rgba(0,0,0,.018);}
+.dt tr:hover td{background:var(--gold3);}
+.dt tfoot td{background:var(--bg2);font-weight:600;border-top:1px solid var(--bg3);}
+.dt tr.base-row td{background:rgba(200,144,58,.08);font-weight:600;}
+
+/* ── TABLE VALUE TAGS ── */
+.g{color:var(--teal);font-weight:600;}
+.w{color:var(--warn);font-weight:600;}
+.b{color:var(--rose);font-weight:600;}
+.mono{font-family:var(--mono);font-weight:600;}
+.decay{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--rose);}
+.decay.ok{color:var(--teal);}
+.lmul{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--indigo);}
+.roi-g{background:rgba(13,122,106,.1);color:var(--teal);font-weight:600;font-family:var(--mono);}
+.roi-m{background:rgba(42,79,160,.08);color:var(--indigo);font-weight:500;font-family:var(--mono);}
+.roi-b{background:rgba(192,58,58,.08);color:var(--rose);font-weight:500;font-family:var(--mono);}
+
+/* ── LEGEND ── */
+.leg{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;font-size:12px;color:var(--ink3);}
+.leg span{display:flex;align-items:center;gap:5px;}
+.ld{width:10px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0;}
+
+/* ── DIVIDER ── */
+.div{height:1px;background:var(--bg3);margin:32px 0;}
+
+/* ── ADVICE CARDS ── */
+.advice{display:flex;flex-direction:column;gap:14px;}
+.av{background:#fff;border:1px solid var(--bg3);border-radius:var(--r);padding:20px;
+  box-shadow:var(--sh);display:flex;gap:16px;align-items:flex-start;}
+.av-num{width:40px;height:40px;border-radius:var(--rs);display:flex;align-items:center;
+  justify-content:center;font-family:var(--mono);font-size:15px;font-weight:600;
+  flex-shrink:0;}
+.av-body h3{font-family:var(--serif);font-size:15px;font-weight:600;margin-bottom:6px;}
+.av-body p{font-size:13px;color:var(--ink2);line-height:1.8;}
+
+/* ── FOOTER ── */
+footer{background:var(--ink2);color:rgba(245,243,238,.35);padding:22px 64px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+@media(max-width:700px){
+  .hdr,.main,footer{padding:24px 20px;}
+  .nav{padding:0 16px;}
+  .two,.chart-body.wide{grid-template-columns:1fr!important;}
+  .kpis{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+
+
+<!-- ══ HEADER ══ -->
+<header class="hdr">
+  <div class="hdr-mesh"></div>
+  <div class="hdr-tag">Game Analytics Report · v3b · 2026-04-17</div>
+  <h1 class="hdr-title">《冒险手册》<br>运营数据全面分析报告</h1>
+  <p class="hdr-sub">数据周期：2026-01-19 ~ 2026-04-15（87天）· 含iOS拆解 · 脚本/封号修正 · 留存衰减 · LTV倍率</p>
+  <div class="hdr-pills">
+    <span class="hp hi">TapTap 7.5分</span>
+    <span class="hp hi">总充值 183.7万</span>
+    <span class="hp ok">v3b 加权留存 + 脚本修正</span>
+    <span class="hp">累计新增 30,203</span>
+    <span class="hp">iOS 5,066人</span>
+    <span class="hp">付费率 7.9%</span>
+    <span class="hp">ARPPU ¥769</span>
+  </div>
+</header>
+
+<!-- ══ NAV ══ -->
+<nav class="nav" id="nav">
+  <div class="ni on" data-s="overview">概览</div>
+  <div class="ni" data-s="retention">留存分析</div>
+  <div class="ni" data-s="ltv">LTV 估算</div>
+  <div class="ni" data-s="ios">iOS 拆解</div>
+  <div class="ni" data-s="botban">脚本/封号</div>
+  <div class="ni" data-s="adroi">广告 ROI</div>
+  <div class="ni" data-s="taptap">平台口碑</div>
+  <div class="ni" data-s="summary">总结建议</div>
+</nav>
+
+<div class="main">
+
+<!-- ══ 概览 ══ -->
+<section id="overview" class="sec on">
+  <div class="sec-hd"><h2>运营核心指标概览</h2><p>公测87天，总充值183.7万，付费结构呈大R主导特征，少数鲸鱼用户贡献绝大部分收入。iOS用户5,066人，占比16.7%。</p></div>
+  <div class="kpis">
+    <div class="kpi gold"><div class="kl">总新增用户</div><div class="kv">30,203</div><div class="ks">含~2,000脚本号</div></div>
+    <div class="kpi gold"><div class="kl">总充值额</div><div class="kv">183.7万</div><div class="ks">日均 ¥21,117</div></div>
+    <div class="kpi teal"><div class="kl">付费用户</div><div class="kv">2,390</div><div class="ks">付费率 7.9%</div></div>
+    <div class="kpi teal"><div class="kl">ARPPU</div><div class="kv">¥768.7</div><div class="ks">生命周期均值</div></div>
+    <div class="kpi indigo"><div class="kl">ARPU</div><div class="kv">¥60.8</div><div class="ks">全用户均值</div></div>
+    <div class="kpi rose"><div class="kl">Day2 留存（加权）</div><div class="kv">27.4%</div><div class="ks">v1 为 25.7%</div></div>
+    <div class="kpi rose"><div class="kl">Day7 留存（加权）</div><div class="kv">10.1%</div><div class="ks">v1 为 8.2%</div></div>
+    <div class="kpi ios"><div class="kl">iOS 用户</div><div class="kv">5,066</div><div class="ks">占总量 16.7%</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">每日充值额趋势（87天）</div>
+    <div class="card-sub">逐日充值金额（元）· 峰值 ¥108,244（2026-03-01）</div>
+    <div class="ch" style="height:220px"><canvas id="revChart"></canvas></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="card-title">支付渠道占比</div>
+      <div class="card-sub">各渠道充值额占比</div>
+      <div class="ch" style="height:200px"><canvas id="pieChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">支付渠道金额（万元）</div>
+      <div class="card-sub">累计充值额对比</div>
+      <div class="ch" style="height:200px"><canvas id="chanChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">高收入日 TOP10 明细</div>
+    <div class="card-sub">典型大R行为：少数用户贡献大量收入</div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>日期</th><th>新增</th><th>付费人数</th><th>付费率</th><th>充值额</th><th>人均付费</th><th>特征</th></tr></thead>
+      <tbody>
+        <tr><td>2026-03-01</td><td>223</td><td>20</td><td>9.0%</td><td>¥108,244</td><td>¥5,412</td><td class="b">超级大R</td></tr>
+        <tr><td>2026-02-28</td><td>797</td><td>108</td><td>13.6%</td><td>¥102,986</td><td>¥954</td><td class="w">高付费日</td></tr>
+        <tr><td>2026-03-02</td><td>270</td><td>39</td><td>14.4%</td><td>¥91,778</td><td>¥2,353</td><td class="b">大R集中</td></tr>
+        <tr><td>2026-03-04</td><td>758</td><td>22</td><td>2.9%</td><td>¥87,362</td><td>¥3,971</td><td class="b">超级大R</td></tr>
+        <tr><td>2026-02-19</td><td>136</td><td>5</td><td>3.7%</td><td>¥76,390</td><td>¥15,278</td><td class="b">鲸鱼用户</td></tr>
+        <tr><td>2026-03-05</td><td>541</td><td>26</td><td>4.8%</td><td>¥60,356</td><td>¥2,321</td><td class="w">偏高</td></tr>
+        <tr><td>2026-03-07</td><td>410</td><td>47</td><td>11.5%</td><td>¥49,946</td><td>¥1,063</td><td class="w">活动日</td></tr>
+        <tr><td>2026-03-06</td><td>311</td><td>15</td><td>4.8%</td><td>¥44,218</td><td>¥2,948</td><td class="b">大R</td></tr>
+        <tr><td>2026-03-16</td><td>321</td><td>46</td><td>14.3%</td><td>¥43,536</td><td>¥946</td><td class="w">活动日</td></tr>
+        <tr><td>2026-03-15</td><td>246</td><td>17</td><td>6.9%</td><td>¥38,432</td><td>¥2,261</td><td class="w">偏高</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ══ 留存 ══ -->
+<section id="retention" class="sec">
+  <div class="sec-hd"><h2>留存分析与拟合预测 <span class="vtag">v3 加权 + 衰减比</span></h2>
+  <p>以次日留存（Day2=27.4%）为基准=1.00×，衰减比 = R(d)/R(Day2)，衡量每天相对次留的留存残存比例。幂律外推公式：R(d) = 0.3749 × d⁻⁰·⁶³¹⁶</p></div>
+
+  <div class="kpis">
+    <div class="kpi gold"><div class="kl">Day2 次留</div><div class="kv">27.4%</div><div class="ks">衰减基准 1.000×</div></div>
+    <div class="kpi gold"><div class="kl">Day7 留存</div><div class="kv">10.1%</div><div class="ks">衰减比 0.368×</div></div>
+    <div class="kpi teal"><div class="kl">Day14 留存</div><div class="kv">6.5%</div><div class="ks">衰减比 0.237×</div></div>
+    <div class="kpi teal"><div class="kl">Day30 留存</div><div class="kv">4.7%</div><div class="ks">衰减比 0.173×</div></div>
+    <div class="kpi indigo"><div class="kl">Day48 留存</div><div class="kv">2.6%</div><div class="ks">衰减比 0.095×（实测末）</div></div>
+    <div class="kpi indigo"><div class="kl">幂律指数</div><div class="kv">-0.632</div><div class="ks">v1 为 -0.719（更缓降）</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">留存曲线：实测（Day2-48）+ 幂律外推（Day49-180）</div>
+    <div class="card-sub">实线=加权实测，虚线=幂律外推</div>
+    <div class="leg">
+      <span><span class="ld" style="background:var(--gold)"></span>实测加权留存</span>
+      <span><span class="ld" style="background:var(--teal);opacity:.7"></span>幂律外推</span>
+      <span><span class="ld" style="background:var(--rose);opacity:.6"></span>脚本修正留存</span>
+    </div>
+    <div class="ch" style="height:260px"><canvas id="retChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">留存率 + 衰减比完整数据表</div>
+    <div class="card-sub">衰减比 = R(d) ÷ R(Day2)；Day2为1.000×基准；▲标注为幂律外推值</div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>天数</th><th>加权留存</th><th>修正留存*</th><th>幂律外推▲</th><th>衰减比 Rd÷R_D2</th><th>行业参考</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>Day 1 <small style="color:var(--ink3)">(获取日)</small></td><td>100.0%</td><td>100.0%</td><td>—</td><td class="decay ok">×3.65</td><td>100%</td><td>获取日全员活跃</td></tr>
+        <tr class="base-row"><td>Day 2 <small style="color:var(--gold)">【次留基准】</small></td><td>27.4%</td><td>30.4%</td><td>24.2%</td><td class="mono">1.000×</td><td>30~45%</td><td>衰减基准，行业偏低</td></tr>
+        <tr><td>Day 3</td><td>18.6%</td><td>20.6%</td><td>18.7%</td><td class="decay">0.678×</td><td>—</td><td>次日又流失32%</td></tr>
+        <tr><td>Day 4</td><td>13.3%</td><td>14.3%</td><td>15.6%</td><td class="decay">0.483×</td><td>—</td><td>—</td></tr>
+        <tr><td>Day 5</td><td>10.9%</td><td>11.7%</td><td>13.6%</td><td class="decay">0.396×</td><td>—</td><td>—</td></tr>
+        <tr><td>Day 6</td><td>11.9%</td><td>12.8%</td><td>12.1%</td><td class="decay" style="color:var(--warn)">0.435×</td><td>—</td><td>周末小幅回流↑</td></tr>
+        <tr class="base-row"><td>Day 7</td><td>10.1%</td><td>10.9%</td><td>11.0%</td><td class="decay">0.368×</td><td>10~20%</td><td>仅剩D2的36.8%</td></tr>
+        <tr><td>Day 10</td><td>7.8%</td><td>8.2%</td><td>8.8%</td><td class="decay">0.285×</td><td>—</td><td>—</td></tr>
+        <tr><td>Day 14</td><td>6.5%</td><td>6.8%</td><td>7.1%</td><td class="decay">0.237×</td><td>—</td><td>仅剩23.7%</td></tr>
+        <tr><td>Day 21</td><td>7.8%</td><td>7.9%</td><td>5.5%</td><td class="decay" style="color:var(--warn)">0.285×</td><td>—</td><td>小幅回升</td></tr>
+        <tr class="base-row"><td>Day 30</td><td>4.7%</td><td>4.8%</td><td>4.4%</td><td class="decay">0.173×</td><td>3~8%</td><td>仅剩17.3%，达标</td></tr>
+        <tr><td>Day 40</td><td>3.7%</td><td>3.7%</td><td>3.7%</td><td class="decay">0.136×</td><td>—</td><td>—</td></tr>
+        <tr><td>Day 48</td><td>2.6%</td><td>2.6%</td><td>3.3%</td><td class="decay">0.095×</td><td>—</td><td>实测末日</td></tr>
+        <tr><td>Day 60 ▲</td><td>—</td><td>—</td><td>2.8%</td><td class="decay" style="color:var(--ink3)">0.103×</td><td>—</td><td>外推</td></tr>
+        <tr><td>Day 90 ▲</td><td>—</td><td>—</td><td>2.2%</td><td class="decay" style="color:var(--ink3)">0.080×</td><td>—</td><td>外推</td></tr>
+        <tr><td>Day 180 ▲</td><td>—</td><td>—</td><td>1.4%</td><td class="decay" style="color:var(--ink3)">0.052×</td><td>—</td><td>外推</td></tr>
+        <tr><td>Day 365 ▲</td><td>—</td><td>—</td><td>0.9%</td><td class="decay" style="color:var(--ink3)">0.033×</td><td>—</td><td>外推</td></tr>
+      </tbody>
+    </table></div>
+    <p style="font-size:11px;color:var(--ink3);margin-top:8px;">*修正留存：剔除约2,000脚本号+1,000封号用户影响后的估算值</p>
+  </div>
+</section>
+
+<!-- ══ LTV ══ -->
+<section id="ltv" class="sec">
+  <div class="sec-hd"><h2>LTV 估算：四模型 × 首日基准 × 倍率</h2>
+  <p>LTV倍率 = LTV_N ÷ LTV_1（首日LTV）。LTV_1=DARPU×1日=¥14.84（乐观）。倍率反映用户生命周期价值随时间的累积速度。</p></div>
+
+  <div class="card">
+    <div class="card-title">四模型 LTV 曲线对比</div>
+    <div class="card-sub">横轴：时间窗口；纵轴：每新增用户累计LTV（元）</div>
+    <div class="leg">
+      <span><span class="ld" style="background:var(--gold)"></span>乐观（平坦DARPU）</span>
+      <span><span class="ld" style="background:var(--teal)"></span>保守（前置衰减）</span>
+      <span><span class="ld" style="background:var(--indigo)"></span>脚本修正版</span>
+      <span><span class="ld" style="background:var(--ios)"></span>iOS专项</span>
+    </div>
+    <div class="ch" style="height:260px"><canvas id="ltvChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">LTV 完整数据表（含首日基准与倍率）</div>
+    <div class="card-sub">LTV倍率 = 该周期LTV ÷ LTV_1（乐观首日14.84元）；倍率越高说明留存越好地承接了后续价值</div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>周期</th><th>乐观 LTV</th><th>保守 LTV</th><th>修正 LTV</th><th>iOS LTV</th><th>LTV倍率（乐观 ÷ LTV_1）</th><th>置信度</th></tr></thead>
+      <tbody>
+        <tr class="base-row"><td><strong>LTV_1</strong> <small style="color:var(--gold)">【首日基准】</small></td><td><strong>¥14.8</strong></td><td><strong>¥11.4</strong></td><td><strong>¥15.4</strong></td><td><strong>¥15.8</strong></td><td class="lmul" style="color:var(--gold)">1.00×</td><td>★★★★★</td></tr>
+        <tr><td>LTV_7</td><td>¥29</td><td>¥22</td><td>¥31</td><td>¥30</td><td class="lmul">1.92×</td><td>★★★★★</td></tr>
+        <tr><td>LTV_14</td><td>¥36</td><td>¥28</td><td>¥40</td><td>¥38</td><td class="lmul">2.44×</td><td>★★★★☆</td></tr>
+        <tr class="base-row"><td>LTV_30</td><td>¥51</td><td>¥40</td><td>¥56</td><td>¥55</td><td class="lmul" style="color:var(--teal)">3.46×</td><td>★★★★☆</td></tr>
+        <tr><td>LTV_60</td><td>¥66</td><td>¥44</td><td>¥71</td><td>¥70</td><td class="lmul">4.46×</td><td>★★★☆☆</td></tr>
+        <tr><td>LTV_90</td><td>¥77</td><td>¥47</td><td>¥82</td><td>¥82</td><td class="lmul">5.20×</td><td>★★★☆☆</td></tr>
+        <tr><td>LTV_180</td><td>¥100</td><td>¥53</td><td>¥104</td><td>¥106</td><td class="lmul">6.75×</td><td>★★☆☆☆</td></tr>
+        <tr><td>LTV_365</td><td>¥131</td><td>¥61</td><td>¥133</td><td>¥139</td><td class="lmul">8.80×</td><td>★★☆☆☆</td></tr>
+      </tbody>
+    </table></div>
+    <div class="co" style="margin-top:14px;font-size:12px;">
+      <strong>倍率解读：</strong>LTV_30是首日的3.46倍（乐观），说明30天内用户平均贡献了首日的3.46倍价值。保守模型因后期ARPU衰减，LTV_365仅5.32×（vs乐观8.80×），两者差距随时间放大，说明收入越来越前置。<strong>建议以LTV_30（¥40~56）为买量ROI决策依据。</strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">DARPU 假设对比</div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>模型</th><th>前期 DARPU</th><th>后期 DARPU</th><th>计算依据</th><th>适用场景</th></tr></thead>
+      <tbody>
+        <tr><td>乐观（平坦）</td><td>¥14.84/天</td><td>¥14.84/天</td><td>总收入÷总新增÷加权活跃天数(4.10)</td><td class="w">保守，收入均匀假设</td></tr>
+        <tr><td>保守（前置衰减）</td><td>¥11.43/天</td><td>¥3.99/天</td><td>前30天65%收入，后35%</td><td class="g">符合实测队列数据</td></tr>
+        <tr><td>脚本修正版</td><td>¥15.43/天</td><td>—</td><td>剔除2,000脚本号后真实用户DARPU略高</td><td class="g">买量决策推荐</td></tr>
+        <tr><td>iOS专项</td><td>¥15.77/天</td><td>—</td><td>iOS ARPU(¥64.5) vs 全均(¥60.8) = 1.06x</td><td class="g">iOS买量决策</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ══ iOS ══ -->
+<section id="ios" class="sec">
+  <div class="sec-hd"><h2>iOS 用户专项分析</h2><p>iOS渠道（App Store）累计5,066用户，占比16.7%，贡献收入17.8%，ARPU高于全平台均值6%，是结构性高质量用户群。</p></div>
+
+  <div class="kpis">
+    <div class="kpi ios"><div class="kl">iOS 用户</div><div class="kv">5,066</div><div class="ks">占总量 16.7%</div></div>
+    <div class="kpi ios"><div class="kl">iOS 充值额</div><div class="kv">¥32.7万</div><div class="ks">占总收入 17.8%</div></div>
+    <div class="kpi ios"><div class="kl">iOS ARPU</div><div class="kv">¥64.5</div><div class="ks">全均¥60.8，溢价×1.06</div></div>
+    <div class="kpi ios"><div class="kl">iOS 付费率（估）</div><div class="kv">~10.3%</div><div class="ks">高于全均7.9%</div></div>
+    <div class="kpi ios"><div class="kl">iOS ARPPU（估）</div><div class="kv">~¥628</div><div class="ks">含苹果税30%后</div></div>
+    <div class="kpi ios"><div class="kl">iOS LTV_30</div><div class="kv">¥55</div><div class="ks">乐观，vs安卓~¥49</div></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="card-title">iOS vs 全平台：关键指标对比</div>
+      <div class="ch" style="height:220px"><canvas id="iosBar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">iOS vs 全平台：LTV 对比</div>
+      <div class="ch" style="height:220px"><canvas id="iosLtv"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">iOS 详细指标表</div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>指标</th><th>iOS</th><th>全平台</th><th>iOS 溢价</th></tr></thead>
+      <tbody>
+        <tr><td>用户量占比</td><td>16.7%</td><td>100%基准</td><td>—</td></tr>
+        <tr><td>收入占比</td><td>17.8%</td><td>100%基准</td><td class="g">+1.1ppt</td></tr>
+        <tr><td>ARPU（生命周期）</td><td>¥64.5</td><td>¥60.8</td><td class="g">×1.06</td></tr>
+        <tr><td>估算付费率</td><td>~10.3%</td><td>7.9%</td><td class="g">+2.4ppt</td></tr>
+        <tr><td>估算ARPPU</td><td>~¥628</td><td>¥769</td><td class="b">-18%（含苹果税）</td></tr>
+        <tr><td>LTV_1（首日）</td><td>¥15.8</td><td>¥14.8</td><td class="g">+6.8%</td></tr>
+        <tr><td>LTV_30（乐观）</td><td>¥55</td><td>¥51</td><td class="g">+8%</td></tr>
+        <tr><td>LTV_90（乐观）</td><td>¥82</td><td>¥77</td><td class="g">+6%</td></tr>
+        <tr><td>LTV_365（乐观）</td><td>¥139</td><td>¥131</td><td class="g">+6%</td></tr>
+        <tr><td>建议安全CPI（30天回本）</td><td>≤¥55</td><td>≤¥51</td><td class="g">可放宽¥4</td></tr>
+      </tbody>
+    </table></div>
+    <div class="co ios" style="margin-top:14px;">
+      <strong>iOS买量策略：</strong>iOS用户ARPU高6%，安全CPI上限可放宽至¥55（安卓¥51）。但注意App Store 30%苹果税已压低净ARPPU（~¥628 vs 安卓¥769），iOS实际利润率低于安卓。建议iOS渠道侧重低门槛充值礼包设计，提升付费率而非单次付费额。
+    </div>
+  </div>
+</section>
+
+<!-- ══ 脚本/封号 ══ -->
+<section id="botban" class="sec">
+  <div class="sec-hd"><h2>脚本号 & 封号用户影响分析</h2><p>约2,000+脚本账号和1,000+封号账号混入留存数据，系统性压低早期留存率，虚增表观新增用户数。剔除后真实留存更高，LTV也更乐观。</p></div>
+
+  <div class="kpis">
+    <div class="kpi bot"><div class="kl">估算脚本号</div><div class="kv">~2,000</div><div class="ks">占总量 6.6%</div></div>
+    <div class="kpi bot"><div class="kl">封号账号</div><div class="kv">~1,000</div><div class="ks">含部分误封</div></div>
+    <div class="kpi bot"><div class="kl">估算真实用户</div><div class="kv">~27,200</div><div class="ks">剔除后</div></div>
+    <div class="kpi bot"><div class="kl">D2 修正留存</div><div class="kv">30.4%</div><div class="ks">+3.0ppt</div></div>
+    <div class="kpi bot"><div class="kl">D7 修正留存</div><div class="kv">10.9%</div><div class="ks">+0.8ppt</div></div>
+    <div class="kpi bot"><div class="kl">LTV_30 修正</div><div class="kv">¥55~56</div><div class="ks">vs乐观¥51</div></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="card-title">修正前后留存对比</div>
+      <div class="ch" style="height:220px"><canvas id="botRet"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">修正前后 LTV 对比</div>
+      <div class="ch" style="height:220px"><canvas id="botLtv"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">脚本/封号修正详细数据表</div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>天数</th><th>含脚本留存</th><th>修正留存</th><th>提升幅度</th><th>修正LTV_30</th><th>修正LTV_90</th></tr></thead>
+      <tbody>
+        <tr><td>Day 2</td><td>27.4%</td><td class="g">30.4%</td><td class="g">+3.0ppt (+11%)</td><td rowspan="6" style="vertical-align:middle;text-align:center;font-size:18px;font-family:var(--serif);font-weight:700;color:var(--teal)">¥55~56</td><td rowspan="6" style="vertical-align:middle;text-align:center;font-size:18px;font-family:var(--serif);font-weight:700;color:var(--teal)">¥81~82</td></tr>
+        <tr><td>Day 3</td><td>18.6%</td><td class="g">20.6%</td><td class="g">+2.1ppt</td></tr>
+        <tr><td>Day 7</td><td>10.1%</td><td class="g">10.9%</td><td class="g">+0.8ppt</td></tr>
+        <tr><td>Day 14</td><td>6.5%</td><td>6.8%</td><td>+0.4ppt</td></tr>
+        <tr><td>Day 30</td><td>4.7%</td><td>4.8%</td><td>+0.1ppt</td></tr>
+        <tr><td>Day 48</td><td>2.6%</td><td>2.6%</td><td>≈0（已清零）</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="co warn"><strong>误封提示：</strong>TapTap评论区已出现"纯手动操作被封且申诉无门"的投诉，说明封号系统存在误伤。若误封比例高（>30%），对留存和口碑的实际拖累更大。建议与安全团队核实，并优化申诉可见性和响应时效。</div>
+</section>
+
+<!-- ══ 广告ROI ══ -->
+<section id="adroi" class="sec">
+  <div class="sec-hd"><h2>广告投流 ROI 估算</h2><p>基于脚本修正版LTV × 六种CPI场景。国内竖屏RPG参考CPI：信息流¥20~40，短视频¥30~60。ROI = LTV_N ÷ CPI。</p></div>
+
+  <div class="kpis">
+    <div class="kpi teal"><div class="kl">30天保本CPI</div><div class="kv">≤¥55</div><div class="ks">修正版LTV_30</div></div>
+    <div class="kpi teal"><div class="kl">90天保本CPI</div><div class="kv">≤¥81</div><div class="ks">修正版LTV_90</div></div>
+    <div class="kpi gold"><div class="kl">iOS安全CPI</div><div class="kv">≤¥55</div><div class="ks">iOS LTV_30=¥55</div></div>
+    <div class="kpi rose"><div class="kl">CPP危险线</div><div class="kv">&gt;¥60</div><div class="ks">CPP接近ARPPU</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ROI 随回收周期增长趋势</div>
+    <div class="leg">
+      <span><span class="ld" style="background:var(--teal)"></span>CPI=¥20</span>
+      <span><span class="ld" style="background:var(--indigo)"></span>CPI=¥40</span>
+      <span><span class="ld" style="background:var(--gold)"></span>CPI=¥70</span>
+    </div>
+    <div class="ch" style="height:240px"><canvas id="roiLine"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ROI 完整矩阵（修正版LTV）</div>
+    <div class="card-sub">绿=盈利 · 蓝=平衡 · 红=亏损</div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>CPI 场景</th><th>ROI_1天</th><th>ROI_7天</th><th>ROI_14天</th><th>ROI_30天</th><th>ROI_60天</th><th>ROI_90天</th><th>ROI_180天</th><th>ROI_365天</th></tr></thead>
+      <tbody>
+        <tr><td>¥20（低）</td><td class="roi-b">0.77x</td><td class="roi-g">1.55x</td><td class="roi-g">1.97x</td><td class="roi-g">2.77x</td><td class="roi-g">3.52x</td><td class="roi-g">4.07x</td><td class="roi-g">5.18x</td><td class="roi-g">6.62x</td></tr>
+        <tr><td>¥30</td><td class="roi-b">0.51x</td><td class="roi-m">1.03x</td><td class="roi-g">1.31x</td><td class="roi-g">1.84x</td><td class="roi-g">2.35x</td><td class="roi-g">2.71x</td><td class="roi-g">3.46x</td><td class="roi-g">4.41x</td></tr>
+        <tr><td>¥40（中性）</td><td class="roi-b">0.39x</td><td class="roi-b">0.78x</td><td class="roi-m">0.98x</td><td class="roi-g">1.38x</td><td class="roi-g">1.76x</td><td class="roi-g">2.04x</td><td class="roi-g">2.59x</td><td class="roi-g">3.31x</td></tr>
+        <tr><td>¥55（iOS上限）</td><td class="roi-b">0.28x</td><td class="roi-b">0.56x</td><td class="roi-b">0.72x</td><td class="roi-m">1.00x</td><td class="roi-m">1.28x</td><td class="roi-g">1.48x</td><td class="roi-g">1.88x</td><td class="roi-g">2.41x</td></tr>
+        <tr><td>¥70（保守）</td><td class="roi-b">0.22x</td><td class="roi-b">0.44x</td><td class="roi-b">0.56x</td><td class="roi-b">0.79x</td><td class="roi-m">1.01x</td><td class="roi-m">1.16x</td><td class="roi-g">1.48x</td><td class="roi-g">1.89x</td></tr>
+        <tr><td>¥100（高竞争）</td><td class="roi-b">0.15x</td><td class="roi-b">0.31x</td><td class="roi-b">0.39x</td><td class="roi-b">0.55x</td><td class="roi-b">0.71x</td><td class="roi-b">0.81x</td><td class="roi-m">1.04x</td><td class="roi-m">1.32x</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">保本CPI上限：各模型 × 各周期</div>
+    <div class="ch" style="height:220px"><canvas id="breakChart"></canvas></div>
+    <div class="dt-wrap" style="margin-top:16px;"><table class="dt">
+      <thead><tr><th>观测窗口</th><th>乐观上限</th><th>保守上限</th><th>修正版</th><th>iOS专项</th></tr></thead>
+      <tbody>
+        <tr class="base-row"><td>LTV_1（首日）</td><td>¥15</td><td>¥11</td><td>¥15</td><td>¥16</td></tr>
+        <tr><td>LTV_7</td><td>¥29</td><td>¥22</td><td>¥31</td><td>¥30</td></tr>
+        <tr><td>LTV_14</td><td>¥36</td><td>¥28</td><td>¥40</td><td>¥38</td></tr>
+        <tr class="base-row"><td>LTV_30 ★推荐</td><td>¥51</td><td>¥40</td><td>¥55</td><td>¥55</td></tr>
+        <tr><td>LTV_60</td><td>¥66</td><td>¥44</td><td>¥71</td><td>¥70</td></tr>
+        <tr><td>LTV_90</td><td>¥77</td><td>¥47</td><td>¥81</td><td>¥82</td></tr>
+        <tr><td>LTV_180</td><td>¥100</td><td>¥53</td><td>¥104</td><td>¥106</td></tr>
+        <tr><td>LTV_365</td><td>¥131</td><td>¥61</td><td>¥133</td><td>¥139</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ══ TapTap ══ -->
+<section id="taptap" class="sec">
+  <div class="sec-hd"><h2>平台口碑分析（TapTap）</h2><p>公开数据（2026-04-16），7.5分，906条评价，关注12万，下载15万。评分处于同品类中等水平。</p></div>
+
+  <div class="kpis">
+    <div class="kpi gold"><div class="kl">综合评分</div><div class="kv">7.5</div><div class="ks">906条评价</div></div>
+    <div class="kpi teal"><div class="kl">关注用户</div><div class="kv">12万</div><div class="ks">TapTap</div></div>
+    <div class="kpi teal"><div class="kl">累计下载</div><div class="kv">15万</div><div class="ks">安卓+iOS</div></div>
+    <div class="kpi rose"><div class="kl">正面标签</div><div class="kv">328票</div><div class="ks">有趣/物超所值/画面</div></div>
+    <div class="kpi rose"><div class="kl">负面标签</div><div class="kv">107票</div><div class="ks">稳定性/玩法/资源</div></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="card-title">TapTap 评价标签分布</div>
+      <div class="ch" style="height:220px"><canvas id="sentChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">评分行业对标</div>
+      <div class="ch" style="height:220px"><canvas id="benchChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">用户评价关键词汇总</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:4px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--teal);margin-bottom:10px;">POSITIVE</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--teal)">●</span> BD搭配自由度高，技能天赋丰富</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--teal)">●</span> 刷宝游戏循环耐玩，有深度</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--teal)">●</span> 平民友好，不逼氪</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--teal)">●</span> 社区氛围好，大佬帮萌新</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--teal)">●</span> 装备养成有后悔药机制</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--rose);margin-bottom:10px;">NEGATIVE</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--rose)">●</span> 缺少新手引导，系统摸不着头脑</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--rose)">●</span> 误封申诉难（手动被封/无响应）</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--rose)">●</span> SS英雄合成无保底争议</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--rose)">●</span> 运行稳定性投诉（闪退/卡顿）</div>
+          <div style="font-size:13px;display:flex;gap:8px;align-items:baseline;"><span style="color:var(--rose)">●</span> 公测改动老玩家两极分化</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 总结 ══ -->
+<section id="summary" class="sec">
+  <div class="sec-hd"><h2>综合总结与运营建议</h2><p>基于87天内部数据 + TapTap公开数据 + iOS拆解 + 脚本修正，综合评估。</p></div>
+
+  <div class="card">
+    <div class="card-title">核心指标健康度评估</div>
+    <div class="ch" style="height:280px"><canvas id="radarChart"></canvas></div>
+    <div class="dt-wrap" style="margin-top:16px;"><table class="dt">
+      <thead><tr><th>维度</th><th>本游戏</th><th>行业基准</th><th>评级</th><th>优先级</th></tr></thead>
+      <tbody>
+        <tr><td>Day2次留</td><td>27.4%（修正30.4%）</td><td>30~45%</td><td class="w">偏低</td><td class="b">P0</td></tr>
+        <tr><td>Day7衰减比</td><td>D2的0.368×</td><td>—</td><td class="w">较快</td><td class="w">P1</td></tr>
+        <tr><td>付费转化率</td><td>7.9%</td><td>8~15%</td><td class="w">偏低</td><td class="w">P1</td></tr>
+        <tr><td>ARPPU水平</td><td>¥769</td><td>行业高位</td><td class="g">优秀</td><td>维护</td></tr>
+        <tr><td>LTV_30（修正版）</td><td>¥55~56</td><td>同类¥20~60</td><td class="g">良好</td><td>维护</td></tr>
+        <tr><td>LTV倍率</td><td>3.46×（LTV_30/LTV_1）</td><td>—</td><td class="g">健康增长</td><td>—</td></tr>
+        <tr><td>TapTap口碑</td><td>7.5分</td><td>7.0~8.5</td><td class="w">中等</td><td class="w">P1</td></tr>
+        <tr><td>iOS结构</td><td>17.8%收入/16.7%用户</td><td>比例匹配</td><td class="g">健康</td><td>加大投放</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="div"></div>
+
+  <div class="advice">
+    <div class="av">
+      <div class="av-num" style="background:rgba(192,58,58,.1);color:var(--rose);">01</div>
+      <div class="av-body">
+        <h3>提升次留（P0）：目标 27.4% → 32%+</h3>
+        <p>次留每提升5ppt，LTV_30约+12%（¥51→¥57），CPI上限可上调约¥5。Day2衰减比0.678（即32%次日再流失），说明新手引导后的第二天体验是核心断点。核心动作：完善系统图鉴、加快Day1核心玩法解锁、首充礼包Day1前置。与TapTap"缺少新手引导"直接呼应。</p>
+      </div>
+    </div>
+    <div class="av">
+      <div class="av-num" style="background:rgba(200,144,58,.1);color:var(--gold);">02</div>
+      <div class="av-body">
+        <h3>买量安全线：安卓 CPI ≤ ¥51，iOS ≤ ¥55</h3>
+        <p>基于修正版LTV_30（¥55~56）。信息流/短视频CPI ¥20~40时ROI 1.8~2.8x，可放量。CPI超¥60时CPP（=CPI÷7.9%）接近ARPPU（¥769），需长尾收益兜底，谨慎扩量。iOS可独立设置CPI策略，上限比安卓高¥4。</p>
+      </div>
+    </div>
+    <div class="av">
+      <div class="av-num" style="background:rgba(13,122,106,.1);color:var(--teal);">03</div>
+      <div class="av-body">
+        <h3>Day7留存用户专项运营（衰减比0.368×）</h3>
+        <p>能留到Day7的用户（仅10.1%）相对Day2又流失了63.2%，但留下来的人LTV_90约¥280（保守），是全量均值5倍以上。Day3和Day7是关键节点：个性化礼包推送、公会引导、社交任务激励。再激活成本远低于新增CPI，是最高ROI运营动作。</p>
+      </div>
+    </div>
+    <div class="av">
+      <div class="av-num" style="background:rgba(106,42,138,.1);color:var(--ios);">04</div>
+      <div class="av-body">
+        <h3>iOS专项放量：CPI上限¥55，优化充值梯度</h3>
+        <p>iOS ARPU高6%、付费率高2.4ppt，LTV_30=¥55，可适当加大iOS买量预算。注意苹果税30%压低净ARPPU（~¥628），建议在iOS端设计更多低门槛充值点（¥6、¥12档），提升付费用户数量而非单次金额。</p>
+      </div>
+    </div>
+    <div class="av">
+      <div class="av-num" style="background:rgba(58,106,42,.1);color:var(--bot);">05</div>
+      <div class="av-body">
+        <h3>口碑风险修复：误封申诉 + SS无保底</h3>
+        <p>TapTap近期AI总结显示误封投诉是最热门负面话题，直接影响自然流量和付费意愿。建议：① 优化申诉流程（可见性+48h响应）；② 为SS英雄合成设计合理保底机制；③ 公测改动提前做玩家沟通，减少老玩家流失。解决后TapTap评分预计可提升0.3~0.5分，降低实际获客成本。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="div"></div>
+  <div class="co teal" style="border-radius:var(--r);border-left-width:4px;padding:18px 22px;">
+    <strong style="font-size:15px;font-family:var(--serif);">综合结论</strong><br><br>
+    《冒险手册》修正版LTV_30=¥55~56，LTV倍率3.46×（乐观），ARPPU ¥769处于同品类高位，<strong>值得规模化投放</strong>。主要瓶颈在新用户留存（次留27.4%低于行业中位）和近期口碑风险。若次留提升至32%，安全CPI上限可提升至¥65+，具备进一步扩量空间。
+  </div>
+</section>
+
+</div><!-- /.main -->
+<footer>
+  <span>《冒险手册》运营数据分析报告 v3b · 2026-04-17</span>
+  <span>数据：内部87天数据 + TapTap公开 + iOS估算</span>
+  <span>CONFIDENTIAL · 禁止对外</span>
+</footer>
+
+<script>
+// ── NAV ──
+document.querySelectorAll('.ni').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+    document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+    el.classList.add('on');
+    document.getElementById(el.dataset.s).classList.add('on');
+    window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
+  });
+});
+
+// ── CHART ENGINE (pure canvas, no dependencies) ──
+const FONTS = {serif:"'Noto Serif SC',serif", mono:"'IBM Plex Mono',monospace", sans:"'Sora',sans-serif"};
+const C = {
+  gold:'#c8903a',teal:'#0d7a6a',rose:'#c03a3a',indigo:'#2a4fa0',
+  ios:'#6a2a8a',bot:'#3a6a2a',warn:'#c07020',
+  grid:'rgba(0,0,0,.05)',text:'#8b90a8',ink:'#0e1117'
+};
+
+function dpr(){return window.devicePixelRatio||1;}
+function setup(id){
+  const c=document.getElementById(id);
+  if(!c)return null;
+  const r=c.parentElement.getBoundingClientRect();
+  const w=r.width||500,h=r.height||260;
+  const d=dpr();
+  c.width=w*d;c.height=h*d;
+  c.style.width=w+'px';c.style.height=h+'px';
+  const ctx=c.getContext('2d');
+  ctx.scale(d,d);
+  return{ctx,w,h};
+}
+
+function drawGrid(ctx,x0,y0,x1,y1,yt,gc,lc){
+  ctx.strokeStyle=C.grid;ctx.lineWidth=.5;
+  const nLines=5;
+  for(let i=0;i<=nLines;i++){
+    const y=y0+(y1-y0)*i/nLines;
+    ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
+    const v=yt-(yt/nLines)*i;
+    ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='right';
+    ctx.fillText(lc?lc(v):v.toFixed(0),x0-6,y+3);
+  }
+}
+
+function drawBars(ctx,x0,y0,bw,maxH,vals,colors,gap){
+  vals.forEach((v,i)=>{
+    const h2=maxH*(v/Math.max(...vals.map(Math.abs),1));
+    const x=x0+i*(bw+gap);
+    const fillH=Math.max(h2,1);
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.beginPath();
+    ctx.roundRect(x,y0-fillH,bw,fillH,2);
+    ctx.fill();
+  });
+}
+
+function lineChart(id,datasets,xlabels,yFmt,padL,padR,padT,padB){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  padL=padL||48;padR=padR||16;padT=padT||12;padB=padB||28;
+  const x0=padL,y0=padT,x1=w-padR,y1=h-padB;
+  const nPts=xlabels.length;
+  const allVals=datasets.flatMap(d=>d.data.filter(v=>v!==null&&v!==undefined));
+  const maxV=Math.max(...allVals)*1.1||1;
+  const minV=Math.min(0,...allVals);
+
+  drawGrid(ctx,x0,y0,x1,y1,maxV,C.grid,yFmt||((v)=>v.toFixed(0)));
+
+  // x labels
+  ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+  const step=Math.ceil(nPts/8);
+  for(let i=0;i<nPts;i+=step){
+    const x=x0+(x1-x0)*i/(nPts-1);
+    ctx.fillText(xlabels[i],x,y1+14);
+  }
+
+  datasets.forEach(ds=>{
+    ctx.strokeStyle=ds.color;
+    ctx.lineWidth=ds.width||2;
+    ctx.setLineDash(ds.dash||[]);
+    ctx.lineJoin='round';
+    ctx.beginPath();
+    let started=false;
+    ds.data.forEach((v,i)=>{
+      if(v===null||v===undefined)return;
+      const x=x0+(x1-x0)*i/(nPts-1);
+      const y=y1-(y1-y0)*(v-minV)/(maxV-minV);
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    if(ds.fill){
+      ctx.fillStyle=ds.fill;
+      ctx.lineTo(x1,y1);ctx.lineTo(x0,y1);ctx.closePath();ctx.fill();
+      ctx.beginPath();
+    }
+    // dots
+    if(ds.dot!==false){
+      ds.data.forEach((v,i)=>{
+        if(v===null||v===undefined)return;
+        const x=x0+(x1-x0)*i/(nPts-1);
+        const y=y1-(y1-y0)*(v-minV)/(maxV-minV);
+        ctx.fillStyle=ds.color;
+        ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+      });
+    }
+  });
+}
+
+function barChart(id,data,labels,colors,yFmt,horizontal){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  const padL=horizontal?100:52,padR=16,padT=12,padB=horizontal?12:30;
+  const x0=padL,y0=padT,x1=w-padR,y1=h-padB;
+  const maxV=Math.max(...data.map(Math.abs))*1.15||1;
+  const gap=horizontal?6:4;
+  const ds=data.length;
+
+  if(!horizontal){
+    drawGrid(ctx,x0,y0,x1,y1,maxV,C.grid,yFmt);
+    ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+    const bw=(x1-x0)/ds-gap;
+    data.forEach((v,i)=>{
+      const x=x0+i*(bw+gap);
+      const bh=(y1-y0)*(v/maxV);
+      const grad=ctx.createLinearGradient(0,y1-bh,0,y1);
+      const col=colors[i%colors.length];
+      grad.addColorStop(0,col);grad.addColorStop(1,col+'88');
+      ctx.fillStyle=grad;
+      ctx.beginPath();ctx.roundRect(x,y1-bh,bw,bh,2);ctx.fill();
+      const lbl=labels[i];
+      if(lbl.length>6){
+        ctx.font=`9px ${FONTS.mono}`;
+        ctx.fillStyle=C.text;
+        ctx.fillText(lbl,x+bw/2,y1+12);
+      }else{
+        ctx.font=`10px ${FONTS.mono}`;
+        ctx.fillStyle=C.text;
+        ctx.fillText(lbl,x+bw/2,y1+14);
+      }
+    });
+  } else {
+    const bh=(y1-y0)/ds-gap;
+    ctx.strokeStyle=C.grid;ctx.lineWidth=.5;
+    for(let i=0;i<=5;i++){
+      const x=x0+(x1-x0)*i/5;
+      ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();
+      ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+      ctx.fillText(yFmt?(yFmt(maxV*i/5)):(maxV*i/5).toFixed(0),x,y1+12);
+    }
+    data.forEach((v,i)=>{
+      const y=y0+i*(bh+gap);
+      const bw2=(x1-x0)*(v/maxV);
+      ctx.fillStyle=colors[i%colors.length];
+      ctx.beginPath();ctx.roundRect(x0,y,bw2,bh,2);ctx.fill();
+      ctx.fillStyle=C.text;ctx.font=`11px ${FONTS.sans}`;ctx.textAlign='right';
+      ctx.fillText(labels[i],x0-6,y+bh/2+4);
+      ctx.fillStyle=C.ink;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='left';
+      ctx.fillText(yFmt?yFmt(v):v,x0+bw2+4,y+bh/2+4);
+    });
+  }
+}
+
+function donutChart(id,data,labels,colors){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  const cx=w*0.42,cy=h/2,r=Math.min(w,h)*0.38,inner=r*0.55;
+  let angle=-Math.PI/2;
+  const total=data.reduce((a,b)=>a+b,0);
+  data.forEach((v,i)=>{
+    const slice=v/total*Math.PI*2;
+    ctx.fillStyle=colors[i];
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fill();
+    angle+=slice;
+  });
+  // legend
+  const lx=w*0.72,ly=h/2-(data.length*18)/2;
+  labels.forEach((lbl,i)=>{
+    ctx.fillStyle=colors[i];
+    ctx.fillRect(lx,ly+i*20,10,10);
+    ctx.fillStyle=C.ink;ctx.font=`11px ${FONTS.sans}`;ctx.textAlign='left';
+    const pct=(data[i]/total*100).toFixed(1)+'%';
+    ctx.fillText(lbl+' '+pct,lx+14,ly+i*20+9);
+  });
+}
+
+function radarChart(id,datasets,labels){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  const cx=w/2,cy=h/2,r=Math.min(w,h)*0.38,n=labels.length;
+  const pts=(vals,scale)=>labels.map((_,i)=>{
+    const a=-Math.PI/2+i*Math.PI*2/n;
+    const v=vals[i]/100*r*scale;
+    return[cx+v*Math.cos(a),cy+v*Math.sin(a)];
+  });
+  // grid
+  [.2,.4,.6,.8,1].forEach(s2=>{
+    ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=.8;
+    const p=pts(new Array(n).fill(100),s2);
+    ctx.beginPath();p.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.stroke();
+  });
+  labels.forEach((_,i)=>{
+    const a=-Math.PI/2+i*Math.PI*2/n;
+    ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=.8;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.stroke();
+    const tx=cx+(r+18)*Math.cos(a),ty=cy+(r+18)*Math.sin(a);
+    ctx.fillStyle=C.text;ctx.font=`11px ${FONTS.sans}`;
+    ctx.textAlign=tx>cx+5?'left':tx<cx-5?'right':'center';
+    ctx.textBaseline=ty>cy+5?'top':ty<cy-5?'bottom':'middle';
+    ctx.fillText(labels[i],tx,ty);
+    ctx.textBaseline='alphabetic';
+  });
+  datasets.forEach(ds=>{
+    const p=pts(ds.data,1);
+    ctx.fillStyle=ds.fill;
+    ctx.strokeStyle=ds.color;
+    ctx.lineWidth=2;
+    ctx.beginPath();p.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();ctx.stroke();
+  });
+}
+
+// ── DATA ──
+const retW=[0.2741,0.1858,0.1325,0.1085,0.1192,0.1009,0.0878,0.0799,0.0782,0.0703,0.07,0.0647,0.065,0.0637,0.0676,0.0625,0.0637,0.0624,0.0608,0.0782,0.0727,0.0644,0.0664,0.0645,0.0724,0.0688,0.0547,0.0526,0.0473,0.0419,0.0414,0.0387,0.0441,0.0345,0.0449,0.0384,0.0334,0.0357,0.0374,0.0349,0.0369,0.0293,0.0346,0.0332,0.0273,0.0279,0.0261];
+const retAdj=[0.3043,0.2063,0.1427,0.1168,0.1284,0.1086,0.0945,0.0862,0.0843,0.0758,0.0754,0.0698,0.0679,0.0665,0.0709,0.0654,0.0667,0.0653,0.0636,0.0802,0.0741,0.0657,0.0677,0.0658,0.0738,0.0702,0.0558,0.0537,0.0482,0.0423,0.0417,0.0390,0.0444,0.0347,0.0451,0.0386,0.0336,0.0359,0.0376,0.0351,0.0371,0.0295,0.0348,0.0334,0.0275,0.0281,0.0263];
+function getRet(d){if(d===1)return 1;if(d<=48)return retW[d-2];return 0.3749*Math.pow(d,-0.6316);}
+function getAdj(d){if(d===1)return 1;if(d<=48)return retAdj[d-2];return 0.4341*Math.pow(d,-0.6763);}
+const DARPU=14.84,DCONS_E=11.43,DCONS_L=3.99,DADJ=15.43,DIOS=15.77;
+function ltvO(h){let s=0;for(let d=1;d<=h;d++)s+=getRet(d);return s*DARPU;}
+function ltvC(h){let s=0;for(let d=1;d<=h;d++)s+=getRet(d)*(d<=30?DCONS_E:DCONS_L);return s;}
+function ltvA(h){let s=0;for(let d=1;d<=h;d++)s+=getAdj(d);return s*DADJ;}
+function ltvI(h){let s=0;for(let d=1;d<=h;d++)s+=getRet(d);return s*DIOS;}
+
+function draw(){
+  // 1. Revenue
+  const revData=[33902,26088,8912,13442,15662,24106,12104,15574,4800,3080,1054,8164,7134,5444,29386,4392,17340,3004,6800,22504,48680,61762,14370,17612,16806,37918,18808,27052,43536,29200,32464,32692,19214,11182,32894,44218,49946,12380,11310,8248,25070,108244,102986,91778,87362,21334,10488,7036,7748,18406,12998,35654,12512,6054,76390,18746,60356,9426,19866,12768,4506,7478,7632,6478,10766,6152,17326,7138,14856,9144,12802,15620,3056,16792,300,6184,1638,7936,5746,7230,14872,9221,38432,3726,12740,9742,1294];
+  const s1=setup('revChart');
+  if(s1){
+    const {ctx,w,h}=s1;
+    const pl=48,pr=16,pt=12,pb=24;
+    const x0=pl,y0=pt,x1=w-pr,y1=h-pb;
+    const maxV=Math.max(...revData)*1.1;
+    drawGrid(ctx,x0,y0,x1,y1,maxV,C.grid,v=>'¥'+(v/10000).toFixed(0)+'w');
+    const bw=(x1-x0)/revData.length-1;
+    revData.forEach((v,i)=>{
+      const bh=(y1-y0)*(v/maxV);
+      const x=x0+i*((x1-x0)/revData.length);
+      const grad=ctx.createLinearGradient(0,y1-bh,0,y1);
+      grad.addColorStop(0,C.gold);grad.addColorStop(1,C.gold+'66');
+      ctx.fillStyle=grad;
+      ctx.beginPath();ctx.roundRect(x,y1-bh,Math.max(bw,1),bh,1);ctx.fill();
+    });
+    ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+    [0,20,40,60,80].forEach(i=>{
+      ctx.fillText('D'+(i+1),x0+i*((x1-x0)/revData.length)+bw/2,y1+14);
+    });
+  }
+
+  // 2. Pie
+  donutChart('pieChart',[44.7,26.8,17.8,5.0,2.0,3.7],
+    ['支付宝','微信','AppStore','支付宝H5','小米','其他'],
+    [C.gold,C.teal,C.indigo,'#e8b86d',C.rose,'#aaa']);
+
+  // 3. Channel bar
+  barChart('chanChart',[82.2,49.2,32.7,9.1,3.6,2.0,1.4],
+    ['支付宝','微信支付','AppStore','支付宝H5','支付宝PC','小米','荣耀'],
+    [C.gold,C.teal,C.indigo,'#e8b86d','#d4a850',C.rose,'#d97070'],
+    v=>'¥'+v.toFixed(0)+'w');
+
+  // 4. Retention curve
+  const rl=[],ro=[],rp=[],ra=[];
+  for(let d=2;d<=48;d++){rl.push('D'+d);ro.push(+(retW[d-2]*100).toFixed(2));rp.push(null);ra.push(+(retAdj[d-2]*100).toFixed(2));}
+  for(let d=49;d<=120;d++){rl.push('D'+d);ro.push(null);rp.push(+(0.3749*Math.pow(d,-0.6316)*100).toFixed(2));ra.push(null);}
+  lineChart('retChart',[
+    {data:ro,color:C.gold,width:2.5,fill:'rgba(200,144,58,.06)'},
+    {data:rp,color:C.teal,width:1.5,dash:[5,3],dot:false},
+    {data:ra,color:C.rose,width:1.5,dash:[3,2]}
+  ],rl,v=>v+'%');
+
+  // 5. LTV chart
+  const lh=[1,7,14,30,60,90,180,365];
+  lineChart('ltvChart',[
+    {data:lh.map(h=>+ltvO(h).toFixed(1)),color:C.gold,width:2.5},
+    {data:lh.map(h=>+ltvC(h).toFixed(1)),color:C.teal,width:2,dash:[5,3]},
+    {data:lh.map(h=>+ltvA(h).toFixed(1)),color:C.indigo,width:2,dash:[3,2]},
+    {data:lh.map(h=>+ltvI(h).toFixed(1)),color:C.ios,width:2}
+  ],lh.map(h=>h+'d'),v=>'¥'+v);
+
+  // 6. iOS comparison bar
+  barChart('iosBar',[64.5,60.8,10.3,7.9],
+    ['iOS ARPU','全均ARPU','iOS付费率%','全均付费率%'],
+    [C.ios,C.gold,C.ios+'cc',C.gold+'cc'],
+    v=>v.toFixed(1));
+
+  // 7. iOS LTV
+  barChart('iosLtv',[30,38,55,70,82,106,139,30,38,51,66,77,100,131],
+    ['7d','14d','30d','60d','90d','180d','365d','7d','14d','30d','60d','90d','180d','365d'],
+    [...Array(7).fill(C.ios),...Array(7).fill(C.gold+'aa')],
+    v=>'¥'+v);
+
+  // 8. Bot retention comparison
+  const bdays=[2,3,4,5,6,7,10,14,21,30,40,48];
+  lineChart('botRet',[
+    {data:bdays.map(d=>(retW[d-2]*100).toFixed(2)),color:C.rose,width:2.5},
+    {data:bdays.map(d=>(retAdj[d-2]*100).toFixed(2)),color:C.bot,width:2,dash:[4,2]}
+  ],bdays.map(d=>'D'+d),v=>v+'%');
+
+  // 9. Bot LTV comparison
+  barChart('botLtv',[29,36,51,66,77,100,131,31,39,55,71,81,104,132],
+    [...[1,7,14,30,60,90,180,365].map(h=>''),...[1,7,14,30,60,90,180,365].map(h=>'')],
+    [...Array(8).fill(C.rose+'aa'),...Array(8).fill(C.bot)]);
+
+  // 10. ROI line
+  const roiH=[1,7,14,30,60,90,180,365];
+  const ltvAdj30arr=roiH.map(h=>ltvA(h));
+  lineChart('roiLine',[
+    {data:roiH.map(h=>+(ltvA(h)/20).toFixed(2)),color:C.teal,width:2.5},
+    {data:roiH.map(h=>+(ltvA(h)/40).toFixed(2)),color:C.indigo,width:2},
+    {data:roiH.map(h=>+(ltvA(h)/70).toFixed(2)),color:C.gold,width:2,dash:[4,2]}
+  ],roiH.map(h=>h+'d'),v=>v.toFixed(1)+'x');
+
+  // 11. Break-even chart
+  const periods=[1,7,14,30,60,90,180,365];
+  barChart('breakChart',[
+    ...periods.map(h=>+ltvO(h).toFixed(0)),
+  ],periods.map(h=>h+'d'),
+    [...periods.map((_,i)=>[C.gold,C.teal,C.indigo,C.ios][i%4])],
+    v=>'¥'+v);
+
+  // 12. Sentiment pie
+  donutChart('sentChart',[328,107],['正面(328票)','负面(107票)'],[C.teal,C.rose]);
+
+  // 13. Benchmark bar
+  barChart('benchChart',[7.5,7.8,8.2,7.6],
+    ['冒险手册','同类RPG均值','头部小游戏','独立游戏均值'],
+    [C.gold,C.teal+'88',C.indigo+'88',C.rose+'88'],
+    v=>v.toFixed(1));
+
+  // 14. Radar
+  radarChart('radarChart',[
+    {data:[55,60,52,82,72,75,68],color:C.gold,fill:'rgba(200,144,58,.12)'},
+    {data:[65,65,65,65,65,70,65],color:C.teal,fill:'rgba(13,122,106,.06)'}
+  ],['次日留存','7日留存','付费转化','ARPPU','LTV','TapTap口碑','iOS健康度']);
+}
+
+// ── RESIZE OBSERVER ──
+const ro=new ResizeObserver(()=>draw());
+document.querySelectorAll('.ch').forEach(el=>ro.observe(el));
+window.addEventListener('load',draw);
+draw();
+</script>
+
+<script>
+// ── NAV ──
+document.querySelectorAll('.ni').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+    document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+    el.classList.add('on');
+    document.getElementById(el.dataset.s).classList.add('on');
+    window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
+  });
+});
+
+// ── CHART ENGINE (pure canvas, no dependencies) ──
+const FONTS = {serif:"'Noto Serif SC',serif", mono:"'IBM Plex Mono',monospace", sans:"'Sora',sans-serif"};
+const C = {
+  gold:'#c8903a',teal:'#0d7a6a',rose:'#c03a3a',indigo:'#2a4fa0',
+  ios:'#6a2a8a',bot:'#3a6a2a',warn:'#c07020',
+  grid:'rgba(0,0,0,.05)',text:'#8b90a8',ink:'#0e1117'
+};
+
+function dpr(){return window.devicePixelRatio||1;}
+function setup(id){
+  const c=document.getElementById(id);
+  if(!c)return null;
+  const r=c.parentElement.getBoundingClientRect();
+  const w=r.width||500,h=r.height||260;
+  const d=dpr();
+  c.width=w*d;c.height=h*d;
+  c.style.width=w+'px';c.style.height=h+'px';
+  const ctx=c.getContext('2d');
+  ctx.scale(d,d);
+  return{ctx,w,h};
+}
+
+function drawGrid(ctx,x0,y0,x1,y1,yt,gc,lc){
+  ctx.strokeStyle=C.grid;ctx.lineWidth=.5;
+  const nLines=5;
+  for(let i=0;i<=nLines;i++){
+    const y=y0+(y1-y0)*i/nLines;
+    ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
+    const v=yt-(yt/nLines)*i;
+    ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='right';
+    ctx.fillText(lc?lc(v):v.toFixed(0),x0-6,y+3);
+  }
+}
+
+function drawBars(ctx,x0,y0,bw,maxH,vals,colors,gap){
+  vals.forEach((v,i)=>{
+    const h2=maxH*(v/Math.max(...vals.map(Math.abs),1));
+    const x=x0+i*(bw+gap);
+    const fillH=Math.max(h2,1);
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.beginPath();
+    ctx.roundRect(x,y0-fillH,bw,fillH,2);
+    ctx.fill();
+  });
+}
+
+function lineChart(id,datasets,xlabels,yFmt,padL,padR,padT,padB){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  padL=padL||48;padR=padR||16;padT=padT||12;padB=padB||28;
+  const x0=padL,y0=padT,x1=w-padR,y1=h-padB;
+  const nPts=xlabels.length;
+  const allVals=datasets.flatMap(d=>d.data.filter(v=>v!==null&&v!==undefined));
+  const maxV=Math.max(...allVals)*1.1||1;
+  const minV=Math.min(0,...allVals);
+
+  drawGrid(ctx,x0,y0,x1,y1,maxV,C.grid,yFmt||((v)=>v.toFixed(0)));
+
+  // x labels
+  ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+  const step=Math.ceil(nPts/8);
+  for(let i=0;i<nPts;i+=step){
+    const x=x0+(x1-x0)*i/(nPts-1);
+    ctx.fillText(xlabels[i],x,y1+14);
+  }
+
+  datasets.forEach(ds=>{
+    ctx.strokeStyle=ds.color;
+    ctx.lineWidth=ds.width||2;
+    ctx.setLineDash(ds.dash||[]);
+    ctx.lineJoin='round';
+    ctx.beginPath();
+    let started=false;
+    ds.data.forEach((v,i)=>{
+      if(v===null||v===undefined)return;
+      const x=x0+(x1-x0)*i/(nPts-1);
+      const y=y1-(y1-y0)*(v-minV)/(maxV-minV);
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    if(ds.fill){
+      ctx.fillStyle=ds.fill;
+      ctx.lineTo(x1,y1);ctx.lineTo(x0,y1);ctx.closePath();ctx.fill();
+      ctx.beginPath();
+    }
+    // dots
+    if(ds.dot!==false){
+      ds.data.forEach((v,i)=>{
+        if(v===null||v===undefined)return;
+        const x=x0+(x1-x0)*i/(nPts-1);
+        const y=y1-(y1-y0)*(v-minV)/(maxV-minV);
+        ctx.fillStyle=ds.color;
+        ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+      });
+    }
+  });
+}
+
+function barChart(id,data,labels,colors,yFmt,horizontal){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  const padL=horizontal?100:52,padR=16,padT=12,padB=horizontal?12:30;
+  const x0=padL,y0=padT,x1=w-padR,y1=h-padB;
+  const maxV=Math.max(...data.map(Math.abs))*1.15||1;
+  const gap=horizontal?6:4;
+  const ds=data.length;
+
+  if(!horizontal){
+    drawGrid(ctx,x0,y0,x1,y1,maxV,C.grid,yFmt);
+    ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+    const bw=(x1-x0)/ds-gap;
+    data.forEach((v,i)=>{
+      const x=x0+i*(bw+gap);
+      const bh=(y1-y0)*(v/maxV);
+      const grad=ctx.createLinearGradient(0,y1-bh,0,y1);
+      const col=colors[i%colors.length];
+      grad.addColorStop(0,col);grad.addColorStop(1,col+'88');
+      ctx.fillStyle=grad;
+      ctx.beginPath();ctx.roundRect(x,y1-bh,bw,bh,2);ctx.fill();
+      const lbl=labels[i];
+      if(lbl.length>6){
+        ctx.font=`9px ${FONTS.mono}`;
+        ctx.fillStyle=C.text;
+        ctx.fillText(lbl,x+bw/2,y1+12);
+      }else{
+        ctx.font=`10px ${FONTS.mono}`;
+        ctx.fillStyle=C.text;
+        ctx.fillText(lbl,x+bw/2,y1+14);
+      }
+    });
+  } else {
+    const bh=(y1-y0)/ds-gap;
+    ctx.strokeStyle=C.grid;ctx.lineWidth=.5;
+    for(let i=0;i<=5;i++){
+      const x=x0+(x1-x0)*i/5;
+      ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();
+      ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+      ctx.fillText(yFmt?(yFmt(maxV*i/5)):(maxV*i/5).toFixed(0),x,y1+12);
+    }
+    data.forEach((v,i)=>{
+      const y=y0+i*(bh+gap);
+      const bw2=(x1-x0)*(v/maxV);
+      ctx.fillStyle=colors[i%colors.length];
+      ctx.beginPath();ctx.roundRect(x0,y,bw2,bh,2);ctx.fill();
+      ctx.fillStyle=C.text;ctx.font=`11px ${FONTS.sans}`;ctx.textAlign='right';
+      ctx.fillText(labels[i],x0-6,y+bh/2+4);
+      ctx.fillStyle=C.ink;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='left';
+      ctx.fillText(yFmt?yFmt(v):v,x0+bw2+4,y+bh/2+4);
+    });
+  }
+}
+
+function donutChart(id,data,labels,colors){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  const cx=w*0.42,cy=h/2,r=Math.min(w,h)*0.38,inner=r*0.55;
+  let angle=-Math.PI/2;
+  const total=data.reduce((a,b)=>a+b,0);
+  data.forEach((v,i)=>{
+    const slice=v/total*Math.PI*2;
+    ctx.fillStyle=colors[i];
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fill();
+    angle+=slice;
+  });
+  // legend
+  const lx=w*0.72,ly=h/2-(data.length*18)/2;
+  labels.forEach((lbl,i)=>{
+    ctx.fillStyle=colors[i];
+    ctx.fillRect(lx,ly+i*20,10,10);
+    ctx.fillStyle=C.ink;ctx.font=`11px ${FONTS.sans}`;ctx.textAlign='left';
+    const pct=(data[i]/total*100).toFixed(1)+'%';
+    ctx.fillText(lbl+' '+pct,lx+14,ly+i*20+9);
+  });
+}
+
+function radarChart(id,datasets,labels){
+  const s=setup(id);if(!s)return;
+  const {ctx,w,h}=s;
+  const cx=w/2,cy=h/2,r=Math.min(w,h)*0.38,n=labels.length;
+  const pts=(vals,scale)=>labels.map((_,i)=>{
+    const a=-Math.PI/2+i*Math.PI*2/n;
+    const v=vals[i]/100*r*scale;
+    return[cx+v*Math.cos(a),cy+v*Math.sin(a)];
+  });
+  // grid
+  [.2,.4,.6,.8,1].forEach(s2=>{
+    ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=.8;
+    const p=pts(new Array(n).fill(100),s2);
+    ctx.beginPath();p.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.stroke();
+  });
+  labels.forEach((_,i)=>{
+    const a=-Math.PI/2+i*Math.PI*2/n;
+    ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=.8;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.stroke();
+    const tx=cx+(r+18)*Math.cos(a),ty=cy+(r+18)*Math.sin(a);
+    ctx.fillStyle=C.text;ctx.font=`11px ${FONTS.sans}`;
+    ctx.textAlign=tx>cx+5?'left':tx<cx-5?'right':'center';
+    ctx.textBaseline=ty>cy+5?'top':ty<cy-5?'bottom':'middle';
+    ctx.fillText(labels[i],tx,ty);
+    ctx.textBaseline='alphabetic';
+  });
+  datasets.forEach(ds=>{
+    const p=pts(ds.data,1);
+    ctx.fillStyle=ds.fill;
+    ctx.strokeStyle=ds.color;
+    ctx.lineWidth=2;
+    ctx.beginPath();p.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();ctx.stroke();
+  });
+}
+
+// ── DATA ──
+const retW=[0.2741,0.1858,0.1325,0.1085,0.1192,0.1009,0.0878,0.0799,0.0782,0.0703,0.07,0.0647,0.065,0.0637,0.0676,0.0625,0.0637,0.0624,0.0608,0.0782,0.0727,0.0644,0.0664,0.0645,0.0724,0.0688,0.0547,0.0526,0.0473,0.0419,0.0414,0.0387,0.0441,0.0345,0.0449,0.0384,0.0334,0.0357,0.0374,0.0349,0.0369,0.0293,0.0346,0.0332,0.0273,0.0279,0.0261];
+const retAdj=[0.3043,0.2063,0.1427,0.1168,0.1284,0.1086,0.0945,0.0862,0.0843,0.0758,0.0754,0.0698,0.0679,0.0665,0.0709,0.0654,0.0667,0.0653,0.0636,0.0802,0.0741,0.0657,0.0677,0.0658,0.0738,0.0702,0.0558,0.0537,0.0482,0.0423,0.0417,0.0390,0.0444,0.0347,0.0451,0.0386,0.0336,0.0359,0.0376,0.0351,0.0371,0.0295,0.0348,0.0334,0.0275,0.0281,0.0263];
+function getRet(d){if(d===1)return 1;if(d<=48)return retW[d-2];return 0.3749*Math.pow(d,-0.6316);}
+function getAdj(d){if(d===1)return 1;if(d<=48)return retAdj[d-2];return 0.4341*Math.pow(d,-0.6763);}
+const DARPU=14.84,DCONS_E=11.43,DCONS_L=3.99,DADJ=15.43,DIOS=15.77;
+function ltvO(h){let s=0;for(let d=1;d<=h;d++)s+=getRet(d);return s*DARPU;}
+function ltvC(h){let s=0;for(let d=1;d<=h;d++)s+=getRet(d)*(d<=30?DCONS_E:DCONS_L);return s;}
+function ltvA(h){let s=0;for(let d=1;d<=h;d++)s+=getAdj(d);return s*DADJ;}
+function ltvI(h){let s=0;for(let d=1;d<=h;d++)s+=getRet(d);return s*DIOS;}
+
+function draw(){
+  // 1. Revenue
+  const revData=[33902,26088,8912,13442,15662,24106,12104,15574,4800,3080,1054,8164,7134,5444,29386,4392,17340,3004,6800,22504,48680,61762,14370,17612,16806,37918,18808,27052,43536,29200,32464,32692,19214,11182,32894,44218,49946,12380,11310,8248,25070,108244,102986,91778,87362,21334,10488,7036,7748,18406,12998,35654,12512,6054,76390,18746,60356,9426,19866,12768,4506,7478,7632,6478,10766,6152,17326,7138,14856,9144,12802,15620,3056,16792,300,6184,1638,7936,5746,7230,14872,9221,38432,3726,12740,9742,1294];
+  const s1=setup('revChart');
+  if(s1){
+    const {ctx,w,h}=s1;
+    const pl=48,pr=16,pt=12,pb=24;
+    const x0=pl,y0=pt,x1=w-pr,y1=h-pb;
+    const maxV=Math.max(...revData)*1.1;
+    drawGrid(ctx,x0,y0,x1,y1,maxV,C.grid,v=>'¥'+(v/10000).toFixed(0)+'w');
+    const bw=(x1-x0)/revData.length-1;
+    revData.forEach((v,i)=>{
+      const bh=(y1-y0)*(v/maxV);
+      const x=x0+i*((x1-x0)/revData.length);
+      const grad=ctx.createLinearGradient(0,y1-bh,0,y1);
+      grad.addColorStop(0,C.gold);grad.addColorStop(1,C.gold+'66');
+      ctx.fillStyle=grad;
+      ctx.beginPath();ctx.roundRect(x,y1-bh,Math.max(bw,1),bh,1);ctx.fill();
+    });
+    ctx.fillStyle=C.text;ctx.font=`10px ${FONTS.mono}`;ctx.textAlign='center';
+    [0,20,40,60,80].forEach(i=>{
+      ctx.fillText('D'+(i+1),x0+i*((x1-x0)/revData.length)+bw/2,y1+14);
+    });
+  }
+
+  // 2. Pie
+  donutChart('pieChart',[44.7,26.8,17.8,5.0,2.0,3.7],
+    ['支付宝','微信','AppStore','支付宝H5','小米','其他'],
+    [C.gold,C.teal,C.indigo,'#e8b86d',C.rose,'#aaa']);
+
+  // 3. Channel bar
+  barChart('chanChart',[82.2,49.2,32.7,9.1,3.6,2.0,1.4],
+    ['支付宝','微信支付','AppStore','支付宝H5','支付宝PC','小米','荣耀'],
+    [C.gold,C.teal,C.indigo,'#e8b86d','#d4a850',C.rose,'#d97070'],
+    v=>'¥'+v.toFixed(0)+'w');
+
+  // 4. Retention curve
+  const rl=[],ro=[],rp=[],ra=[];
+  for(let d=2;d<=48;d++){rl.push('D'+d);ro.push(+(retW[d-2]*100).toFixed(2));rp.push(null);ra.push(+(retAdj[d-2]*100).toFixed(2));}
+  for(let d=49;d<=120;d++){rl.push('D'+d);ro.push(null);rp.push(+(0.3749*Math.pow(d,-0.6316)*100).toFixed(2));ra.push(null);}
+  lineChart('retChart',[
+    {data:ro,color:C.gold,width:2.5,fill:'rgba(200,144,58,.06)'},
+    {data:rp,color:C.teal,width:1.5,dash:[5,3],dot:false},
+    {data:ra,color:C.rose,width:1.5,dash:[3,2]}
+  ],rl,v=>v+'%');
+
+  // 5. LTV chart
+  const lh=[1,7,14,30,60,90,180,365];
+  lineChart('ltvChart',[
+    {data:lh.map(h=>+ltvO(h).toFixed(1)),color:C.gold,width:2.5},
+    {data:lh.map(h=>+ltvC(h).toFixed(1)),color:C.teal,width:2,dash:[5,3]},
+    {data:lh.map(h=>+ltvA(h).toFixed(1)),color:C.indigo,width:2,dash:[3,2]},
+    {data:lh.map(h=>+ltvI(h).toFixed(1)),color:C.ios,width:2}
+  ],lh.map(h=>h+'d'),v=>'¥'+v);
+
+  // 6. iOS comparison bar
+  barChart('iosBar',[64.5,60.8,10.3,7.9],
+    ['iOS ARPU','全均ARPU','iOS付费率%','全均付费率%'],
+    [C.ios,C.gold,C.ios+'cc',C.gold+'cc'],
+    v=>v.toFixed(1));
+
+  // 7. iOS LTV
+  barChart('iosLtv',[30,38,55,70,82,106,139,30,38,51,66,77,100,131],
+    ['7d','14d','30d','60d','90d','180d','365d','7d','14d','30d','60d','90d','180d','365d'],
+    [...Array(7).fill(C.ios),...Array(7).fill(C.gold+'aa')],
+    v=>'¥'+v);
+
+  // 8. Bot retention comparison
+  const bdays=[2,3,4,5,6,7,10,14,21,30,40,48];
+  lineChart('botRet',[
+    {data:bdays.map(d=>(retW[d-2]*100).toFixed(2)),color:C.rose,width:2.5},
+    {data:bdays.map(d=>(retAdj[d-2]*100).toFixed(2)),color:C.bot,width:2,dash:[4,2]}
+  ],bdays.map(d=>'D'+d),v=>v+'%');
+
+  // 9. Bot LTV comparison
+  barChart('botLtv',[29,36,51,66,77,100,131,31,39,55,71,81,104,132],
+    [...[1,7,14,30,60,90,180,365].map(h=>''),...[1,7,14,30,60,90,180,365].map(h=>'')],
+    [...Array(8).fill(C.rose+'aa'),...Array(8).fill(C.bot)]);
+
+  // 10. ROI line
+  const roiH=[1,7,14,30,60,90,180,365];
+  const ltvAdj30arr=roiH.map(h=>ltvA(h));
+  lineChart('roiLine',[
+    {data:roiH.map(h=>+(ltvA(h)/20).toFixed(2)),color:C.teal,width:2.5},
+    {data:roiH.map(h=>+(ltvA(h)/40).toFixed(2)),color:C.indigo,width:2},
+    {data:roiH.map(h=>+(ltvA(h)/70).toFixed(2)),color:C.gold,width:2,dash:[4,2]}
+  ],roiH.map(h=>h+'d'),v=>v.toFixed(1)+'x');
+
+  // 11. Break-even chart
+  const periods=[1,7,14,30,60,90,180,365];
+  barChart('breakChart',[
+    ...periods.map(h=>+ltvO(h).toFixed(0)),
+  ],periods.map(h=>h+'d'),
+    [...periods.map((_,i)=>[C.gold,C.teal,C.indigo,C.ios][i%4])],
+    v=>'¥'+v);
+
+  // 12. Sentiment pie
+  donutChart('sentChart',[328,107],['正面(328票)','负面(107票)'],[C.teal,C.rose]);
+
+  // 13. Benchmark bar
+  barChart('benchChart',[7.5,7.8,8.2,7.6],
+    ['冒险手册','同类RPG均值','头部小游戏','独立游戏均值'],
+    [C.gold,C.teal+'88',C.indigo+'88',C.rose+'88'],
+    v=>v.toFixed(1));
+
+  // 14. Radar
+  radarChart('radarChart',[
+    {data:[55,60,52,82,72,75,68],color:C.gold,fill:'rgba(200,144,58,.12)'},
+    {data:[65,65,65,65,65,70,65],color:C.teal,fill:'rgba(13,122,106,.06)'}
+  ],['次日留存','7日留存','付费转化','ARPPU','LTV','TapTap口碑','iOS健康度']);
+}
+
+// ── RESIZE OBSERVER ──
+const ro=new ResizeObserver(()=>draw());
+document.querySelectorAll('.ch').forEach(el=>ro.observe(el));
+window.addEventListener('load',draw);
+draw();
+</script>
+</div>
+
+<script>
+// ★ 在这里修改密码 ★
+var PASSWORD = "mxsb2026";
+
+function checkPwd() {
+  var input = document.getElementById('pwdInput').value;
+  var err = document.getElementById('errMsg');
+  if (input === PASSWORD) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('report').style.display = 'block';
+    // 触发图表重绘
+    setTimeout(function(){ window.dispatchEvent(new Event('resize')); }, 100);
+    setTimeout(function(){ if(typeof draw==='function') draw(); }, 200);
+  } else {
+    err.textContent = input === '' ? '请输入密码' : '密码错误，请重试';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdInput').focus();
+    document.getElementById('pwdInput').style.borderColor = 'rgba(192,58,58,.6)';
+    setTimeout(function(){
+      document.getElementById('pwdInput').style.borderColor = '';
+      err.textContent = '';
+    }, 2000);
+  }
+}
+</script>
+
+</body>
+</html>
